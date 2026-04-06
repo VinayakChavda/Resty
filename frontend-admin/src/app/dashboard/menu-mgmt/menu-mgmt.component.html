@@ -1,0 +1,179 @@
+<div class="p-6 bg-gray-50 min-h-screen animate-fadeIn">
+    <!-- Header with Tabs -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-black text-gray-800 tracking-tight">Menu Management</h2>
+            <p class="text-xs text-gray-400 mt-1 uppercase font-bold tracking-widest">Restaurant ID: #{{ restaurantId }}</p>
+        </div>
+
+        <div class="flex bg-gray-200 p-1 rounded-2xl shadow-inner">
+            <button (click)="activeTab = 'categories'" 
+                [class]="activeTab === 'categories' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'"
+                class="px-5 py-2 rounded-xl text-xs font-black transition-all uppercase tracking-tighter">Categories</button>
+            
+            <button (click)="activeTab = 'subcategories'" 
+                [class]="activeTab === 'subcategories' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'"
+                class="px-5 py-2 rounded-xl text-xs font-black transition-all ml-1 uppercase tracking-tighter">Sub-Categories</button>
+            
+            <button (click)="activeTab = 'items'" 
+                [class]="activeTab === 'items' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-500'"
+                class="px-5 py-2 rounded-xl text-xs font-black transition-all ml-1 uppercase tracking-tighter">Items</button>
+        </div>
+    </div>
+
+    <!-- 1. CATEGORIES VIEW -->
+    <div *ngIf="activeTab === 'categories'" class="animate-fadeIn">
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8 max-w-4xl">
+            <h3 class="text-[10px] font-black text-orange-500 uppercase mb-4 tracking-widest">New Category</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" [(ngModel)]="newCatName" placeholder="Category Name (e.g. Starters)" 
+                    class="border p-3 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm">
+                <input type="text" [(ngModel)]="newCatDesc" placeholder="Description (Optional)" 
+                    class="border p-3 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm">
+            </div>
+            <button (click)="onAddCategory()" class="mt-4 bg-orange-500 text-white px-8 py-3 rounded-2xl font-black text-xs hover:bg-orange-600 transition shadow-lg shadow-orange-100 active:scale-95 uppercase">
+                Save Category
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div *ngFor="let cat of categories" class="bg-white p-6 rounded-[32px] border-l-8 border-orange-500 shadow-sm hover:shadow-xl transition group relative">
+                <button (click)="openDeleteModal(cat.id)" class="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-xl opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+                <h4 class="font-black text-gray-800 text-xl">{{ cat.name }}</h4>
+                <p class="text-xs text-gray-400 mt-1 italic line-clamp-2 leading-relaxed">{{ cat.description || 'No description added.' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. SUB-CATEGORIES VIEW -->
+    <div *ngIf="activeTab === 'subcategories'" class="animate-fadeIn">
+        <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 max-w-3xl mx-auto text-center">
+            <h3 class="text-xl font-black text-gray-800 mb-6">Create Sub-Category</h3>
+            <div class="space-y-4">
+                <select [(ngModel)]="selectedCatForSub" class="w-full border p-4 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500">
+                    <option [ngValue]="null">Select Parent Category</option>
+                    <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                </select>
+                <input type="text" [(ngModel)]="newSubName" placeholder="Sub-category Name (e.g. Chinese Starters)" class="w-full border p-4 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500">
+                <button (click)="onAddSubCategory()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-black transition shadow-xl active:scale-95 uppercase tracking-widest text-xs">
+                    Create Sub-Category
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ITEMS VIEW (RE-DESIGNED FOR EDIT/DELETE) -->
+    <div *ngIf="activeTab === 'items'" class="animate-fadeIn">
+        <!-- ITEM FORM (Dynamic for Add/Edit) -->
+        <div class="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 mb-10 border-t-8"
+             [ngClass]="isEditMode ? 'border-t-blue-500' : 'border-t-orange-500'">
+            
+            <h3 class="text-[10px] font-black uppercase mb-6 tracking-widest"
+                [ngClass]="isEditMode ? 'text-blue-500' : 'text-orange-500'">
+                {{ isEditMode ? 'Editing Mode: Update Item' : 'New Menu Item' }}
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-black text-gray-400 mb-2 ml-1 uppercase tracking-widest">1. Category</label>
+                    <select [(ngModel)]="selectedCategory" (change)="onCategoryChange()" class="border p-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm">
+                        <option [ngValue]="null">Choose Category</option>
+                        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-black text-gray-400 mb-2 ml-1 uppercase tracking-widest">2. Sub-Category</label>
+                    <select [(ngModel)]="newItem.subcategory_id" [disabled]="!selectedCategory" class="border p-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm disabled:opacity-30">
+                        <option [ngValue]="null">General (Default)</option>
+                        <option *ngFor="let sub of subCategories" [value]="sub.id">{{ sub.name }}</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-black text-gray-400 mb-2 ml-1 uppercase tracking-widest">3. Price (₹)</label>
+                    <input type="number" [(ngModel)]="newItem.price" class="border p-3.5 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 font-black">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <input type="text" [(ngModel)]="newItem.name" placeholder="Item Name (e.g. Paneer Tikka)" class="border p-4 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm font-bold">
+                <input type="text" [(ngModel)]="newItem.description" placeholder="Short description for customers" class="border p-4 rounded-2xl bg-gray-50 border-gray-100 focus:outline-orange-500 text-sm">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4">
+                <button (click)="onSaveItem()" 
+                    [ngClass]="isEditMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-500 hover:bg-orange-600'"
+                    class="flex-1 text-white py-4 rounded-2xl font-black text-sm transition shadow-xl active:scale-95 uppercase tracking-widest">
+                    {{ isEditMode ? 'Update Item' : 'Add Item to Menu' }}
+                </button>
+                
+                <button *ngIf="isEditMode" (click)="cancelEdit()" 
+                    class="px-10 bg-gray-200 text-gray-600 py-4 rounded-2xl font-black text-sm hover:bg-gray-300 transition active:scale-95 uppercase tracking-widest">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">Dish Name</th>
+                        <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Category ID</th>
+                        <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Price</th>
+                        <th class="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let item of items" class="border-b border-gray-50 hover:bg-gray-50/50 transition duration-300">
+                        <td class="p-6">
+                            <p class="font-black text-gray-800">{{ item.name }}</p>
+                            <p class="text-[10px] text-gray-400 italic line-clamp-1 mt-1">{{ item.description || 'Tasty preparation' }}</p>
+                        </td>
+                        <td class="p-6 text-center">
+                            <span class="px-3 py-1 bg-orange-50 text-orange-600 text-[10px] font-black rounded-full uppercase tracking-tighter">#{{ item.subcategory_id }}</span>
+                        </td>
+                        <td class="p-6 text-center font-black text-gray-700">₹{{ item.price }}</td>
+                        <td class="p-6">
+                            <div class="flex justify-end gap-3">
+                                <!-- EDIT ICON -->
+                                <button (click)="onEditItem(item)" class="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <!-- DELETE ICON -->
+                                <button (click)="onDeleteItem(item.id)" class="p-2 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr *ngIf="items.length === 0">
+                        <td colspan="4" class="p-20 text-center text-gray-400 font-bold italic tracking-widest">No items found in your menu.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BLUR MODAL FOR CATEGORY DELETE (Existing) -->
+    <div *ngIf="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 backdrop-blur-md animate-fadeIn p-4">
+        <div class="bg-white p-10 rounded-[48px] shadow-2xl max-w-sm w-full text-center border border-white/50">
+            <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h3 class="text-2xl font-black text-gray-800">Confirm?</h3>
+            <p class="text-gray-400 text-sm mt-3 leading-relaxed">Deleting this category will remove all linked dishes. <span class="text-red-500 font-bold italic">No Undo!</span></p>
+            <div class="flex gap-4 mt-8">
+                <button (click)="closeModal()" class="flex-1 px-6 py-3.5 border border-gray-100 rounded-2xl text-gray-400 font-black hover:bg-gray-50 transition active:scale-95 text-xs uppercase">Cancel</button>
+                <button (click)="confirmDelete()" class="flex-1 px-6 py-3.5 bg-red-500 text-white rounded-2xl font-black hover:bg-red-600 transition shadow-xl shadow-red-100 active:scale-95 text-xs uppercase">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
