@@ -1,0 +1,84 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ----------------------
+# Virtual Environment
+# ----------------------
+venv/
+.env/
+.env.*
+.venv/
+
+# ----------------------
+# Environment Variables
+# ----------------------
+.env
+.env.local
+.env.development
+.env.production
+
+# ----------------------
+# Logs
+# ----------------------
+*.log
+
+# ----------------------
+# Database
+# ----------------------
+*.sqlite3
+*.db
+
+# ----------------------
+# IDE / Editor
+# ----------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------
+# OS Files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Build / Distribution
+# ----------------------
+build/
+dist/
+*.egg-info/
+
+# ----------------------
+# Testing
+# ----------------------
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ----------------------
+# Migrations (optional)
+# ----------------------
+# If using Alembic and you WANT to ignore:
+# migrations/versions/*.py
+
+# ----------------------
+# Uploads / Media
+# ----------------------
+uploads/
+media/
+
+# ----------------------
+# Docker (optional)
+# ----------------------
+# .dockerignore
+
+# ----------------------
+# Misc
+# ----------------------
+*.pem
+*.key
