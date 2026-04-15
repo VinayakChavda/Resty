@@ -18,8 +18,20 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd ~/resty || git clone https://github.com/VinayakChavda/Resty.git ~/resty
-            cd ~/resty
+            # 1. Move to home directory
+            cd /home/ubuntu
+            
+            # 2. If the folder doesn't exist, clone the repo
+            if [ ! -d "Resty" ]; then
+              git clone https://github.com/VinayakChavda/Resty.git
+            fi
+            
+            # 3. Enter the folder
+            cd Resty
+            
+            # 4. Pull the latest code from GitHub
             git pull origin main
-            docker-compose down
-            docker-compose up --build -d 
+            
+            # 5. Run Docker (make sure your .env is already in this folder!)
+            sudo docker-compose down
+            sudo docker-compose up --build -d
