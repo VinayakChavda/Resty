@@ -10,7 +10,11 @@ from .websocket_manager import manager
 from fastapi import WebSocket, Depends
 from .routers.payment_router import router as payment_router
 
-app = FastAPI(title='Restaurant SaaS Backend')
+app = FastAPI(root_path="/api", 
+    docs_url="/docs", 
+    openapi_url="/openapi.json",
+    title='Restaurant SaaS Backend'
+    )
 
 app.add_middleware(
     CORSMiddleware,
