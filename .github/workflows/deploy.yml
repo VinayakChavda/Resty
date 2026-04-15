@@ -1,0 +1,25 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ] # Triggered when you push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/resty || git clone https://github.com/VinayakChavda/Resty.git ~/resty
+            cd ~/resty
+            git pull origin main
+            docker-compose down
+            docker-compose up --build -d 
