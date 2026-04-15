@@ -2,6 +2,8 @@ version: '3.8'
 services:
   db:
     image: postgres:15
+    ports:
+      - "5432:5432" 
     restart: always
     environment:
       # These variables tell Postgres what password to set on startup
