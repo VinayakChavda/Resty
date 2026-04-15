@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
 import { Category, MenuItem } from '../models/menu.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MenuService {
-    private apiUrl = 'http://127.0.0.1:8000/menu';
+    private apiUrl = `${environment.backendUrl}/menu`;
+    
 
     private get authHeader() {
         return { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };

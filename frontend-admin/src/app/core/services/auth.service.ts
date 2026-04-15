@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode'; // Import decoding library
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://127.0.0.1:8000/auth';
+  private apiUrl = `${environment.backendUrl}/auth`;
 
   async login(credentials: any) {
     try {

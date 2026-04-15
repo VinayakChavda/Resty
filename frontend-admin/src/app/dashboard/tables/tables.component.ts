@@ -5,6 +5,7 @@ import { QRCodeComponent } from 'angularx-qrcode'; // Library for QR
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../core/services/auth.service';
 import { TableService } from '../../core/services/table.service';
+import { environment } from '../../../environments/environment';
 
 interface Table {
   id: number;
@@ -22,7 +23,7 @@ interface Table {
 export class TablesComponent implements OnInit {
   tables: any[] = [];
   newTableNumber = '';
-  baseUrl = 'http://192.168.1.5:4200/public-menu'; // Use your Laptop IP
+  baseUrl = `${environment.tablesQrURL}/public-menu`; // Use your Laptop IP
   restaurantId: number | null = null;
 
   constructor(

@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TableService {
-  private apiUrl = 'http://127.0.0.1:8000/tables';
+  private apiUrl = `${environment.backendUrl}/tables`;
+  
 
   private get authHeader() {
     return { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };

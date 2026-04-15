@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import axios from 'axios';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-
-  private apiUrl = 'http://127.0.0.1:8000/orders';
+  private apiUrl = `${environment.backendUrl}/orders`;
+  
 
   private get authHeader() {
     return { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
