@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import axios from 'axios';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from '../../../environments/environment';
 
 declare var Razorpay: any; // Razorpay ke liye global variable
 @Component({
@@ -25,6 +26,9 @@ export class PublicMenuComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private toastr: ToastrService) { }
 
+  private apiUrl = `${environment.backendUrl}`;
+
+
   async ngOnInit() {
     this.restaurantId = this.route.snapshot.params['rid'];
     this.tableNumber = this.route.snapshot.params['tid'];
@@ -35,7 +39,7 @@ export class PublicMenuComponent implements OnInit {
     const amount = this.cartTotal;
 
     // 1. Backend se Razorpay Order ID maango
-    const res = await axios.post(`http://127.0.0.1:8000/payments/create-order?amount=${amount}`);
+    const res = await axios.post(`${this.apiUrl}/payments/create-order?amount=${amount}`);
     const razorpayOrderId = res.data.id;
 
     // 2. Razorpay Popup Options
@@ -59,7 +63,7 @@ export class PublicMenuComponent implements OnInit {
 
   async verifyPaymentOnBackend(paymentData: any) {
     try {
-      const res = await axios.post('http://127.0.0.1:8000/payments/verify', {
+      const res = await axios.post(`${this.apiUrl}/payments/verify`, {
         razorpay_order_id: paymentData.razorpay_order_id,
         razorpay_payment_id: paymentData.razorpay_payment_id,
         razorpay_signature: paymentData.razorpay_signature
@@ -91,7 +95,7 @@ export class PublicMenuComponent implements OnInit {
     };
 
     try {
-      const res = await axios.post('http://127.0.0.1:8000/public/place-order', orderPayload);
+      const res = await axios.post(`${this.apiUrl}/public/place-order`, orderPayload);
 
       if (res.data.status === 'success') {
         this.showCart = false;
@@ -109,7 +113,7 @@ export class PublicMenuComponent implements OnInit {
 
   async fetchMenu() {
     try {
-      const res = await axios.get(`http://127.0.0.1:8000/public/menu/${this.restaurantId}`);
+      const res = await axios.get(`${this.apiUrl}/public/menu/${this.restaurantId}`);
       this.restaurantInfo = res.data.restaurant_info;
       this.menuData = res.data.menu; // Ab ye nested array hai
 
