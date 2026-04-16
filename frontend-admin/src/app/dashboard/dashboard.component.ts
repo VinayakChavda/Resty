@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../core/services/auth.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,7 +23,7 @@ export class DashboardComponent implements OnInit{
     if (!restaurantId) return;
 
     // Connect to FastAPI WebSocket
-    this.socket = new WebSocket(`ws://127.0.0.1:8000/ws/${restaurantId}`);
+    this.socket = new WebSocket(`ws://${environment.socketIp}/ws/${restaurantId}`);
 
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
