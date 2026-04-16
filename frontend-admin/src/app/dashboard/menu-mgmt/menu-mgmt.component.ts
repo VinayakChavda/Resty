@@ -14,34 +14,28 @@ import { Category, MenuItem, SubCategory } from '../../core/models/menu.model';
   styleUrl: './menu-mgmt.component.scss'
 })
 export class MenuMgmtComponent implements OnInit {
+  tabs: ('categories' | 'subcategories' | 'items')[] = ['categories', 'subcategories', 'items'];
   activeTab: 'categories' | 'subcategories' | 'items' = 'categories';
-  restaurantId: number | null = null;
+  
+  showForm = false;
+  isInitialLoading = true;
+  isSaving = false;
+  isDeleting = false;
   isEditMode = false;
+  
+  restaurantId: number | null = null;
   editingItemId: number | null = null;
-
-  // Data Lists
   categories: Category[] = [];
   subCategories: SubCategory[] = [];
   items: MenuItem[] = [];
 
-  // Form Models - Category
   newCatName = '';
   newCatDesc = '';
-
-  // Form Models - SubCategory
   selectedCatForSub: number | null = null;
   newSubName = '';
+  selectedCategory: number | null = null;
+  newItem = { name: '', description: '', price: 0, subcategory_id: null as number | null };
 
-  // Form Models - Item
-  selectedCategory: number | null = null; // Dropdown binding
-  newItem = {
-    name: '',
-    description: '',
-    price: 0,
-    subcategory_id: null as number | null
-  };
-
-  // Delete Modal state
   showDeleteModal = false;
   catIdToDelete: number | null = null;
 
@@ -56,167 +50,115 @@ export class MenuMgmtComponent implements OnInit {
     await this.loadAllData();
   }
 
+  toggleForm() {
+    this.showForm = !this.showForm;
+    if (!this.showForm) this.cancelEdit();
+  }
+
+  onTabChange(tab: 'categories' | 'subcategories' | 'items') {
+    this.activeTab = tab;
+    this.showForm = false;
+    this.isEditMode = false;
+  }
+
   async loadAllData() {
+    this.isInitialLoading = true;
     try {
-      this.categories = await this.menuService.getCategories();
-      this.items = await this.menuService.getMenuItems();
-    } catch (e) {
-      console.error('Data load error', e);
+      const [cats, menuItems] = await Promise.all([
+        this.menuService.getCategories(),
+        this.menuService.getMenuItems()
+      ]);
+      this.categories = cats;
+      this.items = menuItems;
+    } finally {
+      this.isInitialLoading = false;
     }
   }
 
-  // --- CATEGORY METHODS ---
   async onAddCategory() {
     if (!this.newCatName) return;
+    this.isSaving = true;
     try {
-      await this.menuService.addCategory({
-        name: this.newCatName,
-        description: this.newCatDesc
-      });
-      this.toastr.success('Category saved successfully!');
-      this.newCatName = '';
-      this.newCatDesc = '';
+      await this.menuService.addCategory({ name: this.newCatName, description: this.newCatDesc });
+      this.toastr.success('Category Saved');
+      this.newCatName = ''; this.newCatDesc = '';
+      this.showForm = false;
       await this.loadAllData();
-    } catch (e) {
-      this.toastr.error('Failed to add category');
-    }
+    } finally { this.isSaving = false; }
   }
 
-  openDeleteModal(id: number) {
-    this.catIdToDelete = id;
-    this.showDeleteModal = true;
-  }
-
-  async confirmDelete() {
-    if (this.catIdToDelete) {
-      try {
-        await this.menuService.deleteCategory(this.catIdToDelete);
-        this.toastr.success('Category removed');
-        await this.loadAllData();
-      } catch (e) {
-        this.toastr.error('Error deleting category');
-      } finally {
-        this.closeModal();
-      }
-    }
-  }
-
-  closeModal() {
-    this.showDeleteModal = false;
-    this.catIdToDelete = null;
-  }
-
-  // --- SUB-CATEGORY METHODS ---
   async onAddSubCategory() {
-    if (!this.newSubName || !this.selectedCatForSub) {
-      this.toastr.warning('Please select category and enter name');
-      return;
-    }
+    if (!this.newSubName || !this.selectedCatForSub) return;
+    this.isSaving = true;
     try {
       await this.menuService.addSubCategory(this.newSubName, this.selectedCatForSub);
-      this.toastr.success('Sub-category added!');
+      this.toastr.success('Sub-category Saved');
       this.newSubName = '';
-    } catch (e) {
-      this.toastr.error('Error adding sub-category');
-    }
+      this.showForm = false;
+      await this.loadAllData();
+    } finally { this.isSaving = false; }
   }
 
-  // --- ITEM METHODS ---
   async onCategoryChange() {
     if (this.selectedCategory) {
-      // Load subcategories for the selected category
       this.subCategories = await this.menuService.getSubCategories(this.selectedCategory);
-      this.newItem.subcategory_id = null; // Reset selection
     }
   }
 
-  async onAddItem() {
-    if (!this.newItem.name || !this.newItem.price || !this.selectedCategory) {
-      this.toastr.warning('Please fill required fields');
-      return;
-    }
-
+  async onSaveItem() {
+    if (!this.newItem.name || !this.newItem.price || !this.selectedCategory) return;
+    this.isSaving = true;
+    const payload = { ...this.newItem, category_id: this.selectedCategory };
     try {
-      // Backend handles "General" fallback if subcategory_id is null
-      const payload = {
-        ...this.newItem,
-        category_id: this.selectedCategory
-      };
-      await this.menuService.addMenuItem(payload);
-      this.toastr.success('Item added to menu!');
-      this.resetItemForm();
+      if (this.isEditMode && this.editingItemId) {
+        await this.menuService.updateMenuItem(this.editingItemId, payload);
+        this.toastr.success('Updated');
+      } else {
+        await this.menuService.addMenuItem(payload);
+        this.toastr.success('Added');
+      }
+      this.cancelEdit();
       await this.loadAllData();
-    } catch (e) {
-      this.toastr.error('Failed to add item');
-    }
+    } finally { this.isSaving = false; }
+  }
+
+  onEditItem(item: MenuItem) {
+    this.isEditMode = true;
+    this.showForm = true;
+    this.editingItemId = item.id;
+    this.newItem = { name: item.name, description: item.description || '', price: item.price, subcategory_id: item.subcategory_id };
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async onDeleteItem(id: number) {
+    if (!confirm('Are you sure?')) return;
+    await this.menuService.deleteMenuItem(id);
+    this.toastr.success('Deleted');
+    await this.loadAllData();
+  }
+
+  cancelEdit() {
+    this.isEditMode = false;
+    this.showForm = false;
+    this.editingItemId = null;
+    this.resetItemForm();
   }
 
   resetItemForm() {
     this.newItem = { name: '', description: '', price: 0, subcategory_id: null };
     this.selectedCategory = null;
-    this.subCategories = [];
   }
 
-  async onDeleteItem(id: number) {
-    if (confirm('Bhai, pakka delete karna hai?')) {
-      try {
-        await this.menuService.deleteMenuItem(id);
-        this.toastr.success('Item removed from menu');
-        await this.loadAllData();
-      } catch (e) { this.toastr.error('Delete fail ho gaya'); }
-    }
-  }
-
-  // Edit Mode On
-  onEditItem(item: MenuItem) {
-    this.isEditMode = true;
-    this.editingItemId = item.id;
-
-    // Form populate karo
-    this.newItem = {
-      name: item.name,
-      description: item.description || '',
-      price: item.price,
-      subcategory_id: item.subcategory_id
-    };
-
-    // Category dropdown set karo (Backend se category_id dhoondna padega agar item mein nahi hai)
-    // Simple way: Subcategory logic ko use karke category_id nikal lo
-    this.selectedCategory = this.categories.find(c => c.id === item.subcategory_id)?.id || null;
-    this.onCategoryChange(); // Load subcategories for this item
-  }
-
-  // Cancel Edit
-  cancelEdit() {
-    this.isEditMode = false;
-    this.editingItemId = null;
-    this.resetItemForm();
-  }
-
-  // Update Submit Logic (Existing onAddItem ko modify karo)
-  async onSaveItem() {
-    const payload = {
-      name: this.newItem.name,
-      description: this.newItem.description,
-      price: this.newItem.price,
-      subcategory_id: this.newItem.subcategory_id, // can be null
-      category_id: this.selectedCategory,          // explicitly send this
-      is_available: true
-    };
-
+  openDeleteModal(id: number) { this.catIdToDelete = id; this.showDeleteModal = true; }
+  closeModal() { this.showDeleteModal = false; this.catIdToDelete = null; }
+  async confirmDelete() {
+    if (!this.catIdToDelete) return;
+    this.isDeleting = true;
     try {
-      if (this.isEditMode && this.editingItemId) {
-        await this.menuService.updateMenuItem(this.editingItemId, payload);
-        this.toastr.success('Update ho gaya!');
-      } else {
-        await this.menuService.addMenuItem(payload);
-        this.toastr.success('Add ho gaya!');
-      }
-      this.cancelEdit();
-      this.loadAllData();
-    } catch (error) {
-      console.error(error); // Console mein dekho kya error aa raha hai
-      this.toastr.error('Kuch gadbad hai boss!');
-    }
+      await this.menuService.deleteCategory(this.catIdToDelete);
+      this.toastr.success('Removed');
+      await this.loadAllData();
+      this.closeModal();
+    } finally { this.isDeleting = false; }
   }
 }

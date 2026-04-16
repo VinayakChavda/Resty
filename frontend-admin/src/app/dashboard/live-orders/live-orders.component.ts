@@ -12,12 +12,13 @@ export class LiveOrdersComponent implements OnInit {
   orders: any[] = [];
   completedOrders: any[] = []; // History
   activeTab: 'live' | 'completed' = 'live'; // Tab state
+  loadingMap: { [key: number]: boolean } = {};
 
-  constructor(private orderService: OrderService) {}
+  constructor(private orderService: OrderService) { }
 
   async ngOnInit() {
     await this.refreshData();
-    
+
     // Global Event Listener (WebSocket se refresh karne ke liye)
     window.addEventListener('refresh-orders', async () => {
       await this.refreshData();
@@ -42,7 +43,13 @@ export class LiveOrdersComponent implements OnInit {
   }
 
   async changeStatus(orderId: number, status: string) {
-    await this.orderService.updateStatus(orderId, status);
-    await this.refreshData();
+    this.loadingMap[orderId] = true; // 👈 start loading for this order
+
+    try {
+      await this.orderService.updateStatus(orderId, status);
+      await this.refreshData();
+    } finally {
+      this.loadingMap[orderId] = false; // 👈 stop loading
+    }
   }
 }

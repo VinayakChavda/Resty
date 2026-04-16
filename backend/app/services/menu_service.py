@@ -12,7 +12,6 @@ class MenuService:
         # 2. IMPORTANT: Isi Category ID ke saath ek Default SubCategory banao
         # Taaki foreign key violation na ho
         default_sub = MenuSubCategory(
-            id=category.id, # Hum same ID rakh rahe hain simplicity ke liye
             name="General", 
             category_id=category.id, 
             restaurant_id=restaurant_id
