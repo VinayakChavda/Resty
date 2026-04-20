@@ -23,6 +23,8 @@ export class PublicMenuComponent implements OnInit {
   activeCategory = '';
   showCart = false;
   orderLoading = false;
+  publicActiveTab: 'menu' | 'bill' = 'menu';
+  activeOrder: any = null; // Holds the order if table is active
 
   constructor(private route: ActivatedRoute, private toastr: ToastrService) { }
 
@@ -33,7 +35,46 @@ export class PublicMenuComponent implements OnInit {
     this.restaurantId = this.route.snapshot.params['rid'];
     this.tableNumber = this.route.snapshot.params['tid'];
     await this.fetchMenu();
+    await this.checkExistingOrder();
+    this.setupCustomerSocket();
   }
+
+  setupCustomerSocket() {
+    const socket = new WebSocket(`ws://${environment.socketIp}/ws/${this.restaurantId}`);
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      // Only care if the update is for THIS table
+      if (data.table_number === this.tableNumber) {
+        if (data.event === 'STATUS_UPDATE') {
+          this.activeOrder.status = data.status; // Update UI in real-time
+          this.toastr.success(`Your order is now: ${data.status.toUpperCase()}`);
+        }
+      }
+    };
+  }
+
+  async callService(type: string) {
+    // Call backend to log the request and notify admin
+    await axios.post(`${this.apiUrl}/public/call-service`, {
+      restaurant_id: this.restaurantId,
+      table_number: this.tableNumber,
+      type: type
+    });
+    this.toastr.success(`Waiter notified for ${type}!`);
+  }
+
+  async checkExistingOrder() {
+    try {
+      const res = await axios.get(`${this.apiUrl}/public/active-order/${this.restaurantId}/${this.tableNumber}`);
+      this.activeOrder = res.data;
+      // If order exists, we don't automatically switch to 'bill', 
+      // but we show the tab option in the UI
+    } catch (e) {
+      this.activeOrder = null;
+    }
+  }
+
 
   async payAndOrder() {
     const amount = this.cartTotal;
@@ -101,6 +142,8 @@ export class PublicMenuComponent implements OnInit {
         this.showCart = false;
         this.cart = []; // Cart khali kardo
         this.toastr.success(`Success! Order ID #${res.data.order_id} is sent to the kitchen.`);
+        await this.checkExistingOrder();
+        this.publicActiveTab = 'bill';
         // TODO: Redirect to a "Thank You" or "Order Tracking" page
       }
     } catch (error) {

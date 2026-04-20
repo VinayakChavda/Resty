@@ -7,16 +7,19 @@ import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule,RouterLink,RouterLinkActive,RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit{
+export class DashboardComponent implements OnInit {
   private socket!: WebSocket;
-  constructor(private router: Router,private toastr: ToastrService,private authService: AuthService) {}
+  constructor(private router: Router, private toastr: ToastrService, private authService: AuthService) { }
 
   ngOnInit() {
-    this.setupWebSocket();  }
+    this.setupWebSocket();
+  }
+
+
 
   setupWebSocket() {
     const restaurantId = this.authService.getRestaurantId();
@@ -34,13 +37,20 @@ export class DashboardComponent implements OnInit{
 
         // SHOW TOAST
         this.toastr.info(
-          `Table ${data.table_number} placed a new order of ₹${data.total_price}`, 
-          '🔔 NEW ORDER!',
-          { timeOut: 10000, progressBar: true }
+          `Table ${data.table_number} just updated their order!`,
+          '🔥 NEW ITEMS ARRIVED',
+          { timeOut: 8000, progressBar: true, closeButton: true }
         );
         window.dispatchEvent(new Event('refresh-orders'));
 
         // TODO: Yahan hum orders list ko refresh kar denge
+      }
+
+      if (data.event === 'WAITER_CALL') {
+        const audio = new Audio('assets/notification.mp3'); // Add a distinct sound
+        audio.play();
+        this.toastr.warning(`Table ${data.table_number} is calling for ${data.type}!`, '✋ WAITER CALLED', { timeOut: 0 });
+        window.dispatchEvent(new Event('refresh-requests'));
       }
     };
 

@@ -15,7 +15,7 @@ import { Category, MenuItem, SubCategory } from '../../core/models/menu.model';
 })
 export class MenuMgmtComponent implements OnInit {
   tabs: ('categories' | 'subcategories' | 'items')[] = ['categories', 'subcategories', 'items'];
-  activeTab: 'categories' | 'subcategories' | 'items' = 'categories';
+  activeTab: 'categories' | 'subcategories' | 'items' = 'items';
   
   showForm = false;
   isInitialLoading = true;
