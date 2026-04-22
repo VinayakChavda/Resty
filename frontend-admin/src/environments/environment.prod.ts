@@ -1,7 +1,7 @@
 // environment.ts (dev)
 export const environment = {
   production: true,
-  tablesQrURL: 'http://54.90.221.180',
-  backendUrl: 'http://54.90.221.180/api',
-  socketIp : "54.90.221.180"
+  tablesQrURL: 'http://67.202.20.33',
+  backendUrl: 'http://67.202.20.33/api',
+  socketIp : "67.202.20.33"
 };
