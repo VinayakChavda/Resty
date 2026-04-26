@@ -70,12 +70,16 @@ class OrderRepository(BaseRepository):
         ).order_by(Order.created_at.desc()).all()
 
     def update_order_status(self, order_id: int, status: str, restaurant_id: int):
-        db_order = self.db.query(Order).filter(Order.id == order_id, Order.restaurant_id == restaurant_id).first()
+        db_order = self.db.query(Order).filter(
+            Order.id == order_id, 
+            Order.restaurant_id == restaurant_id
+        ).first()
+        
         if db_order:
             db_order.status = status
             self.db.commit()
             self.db.refresh(db_order)
-            return db_order
+            return db_order  # Now returns the full object including table_number
         return None
     
     def get_completed_orders(self, restaurant_id: int):

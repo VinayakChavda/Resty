@@ -37,6 +37,7 @@ class MenuItemBase(BaseModel):
     subcategory_id: Optional[int] = None # <-- Isse Optional kardo
     category_id: Optional[int] = None    # <-- Isse bhi add kardo taaki logic easy ho jaye
     is_available: bool = True
+    image_url: Optional[str] = None 
 
 class MenuItemCreate(MenuItemBase):
     pass

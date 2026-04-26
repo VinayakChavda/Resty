@@ -41,16 +41,30 @@ export class PublicMenuComponent implements OnInit {
 
   setupCustomerSocket() {
     const socket = new WebSocket(`ws://${environment.socketIp}/ws/${this.restaurantId}`);
-    socket.onmessage = (event) => {
+    
+    socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
 
-      // Only care if the update is for THIS table
       if (data.table_number === this.tableNumber) {
         if (data.event === 'STATUS_UPDATE') {
-          this.activeOrder.status = data.status; // Update UI in real-time
-          this.toastr.success(`Your order is now: ${data.status.toUpperCase()}`);
+          
+          if (data.status === 'completed') {
+            // 🔥 THE FIX: Session closed
+            this.activeOrder = null;        // Remove bill data
+            this.publicActiveTab = 'menu';  // Force switch to Menu tab
+            this.showCart = false;          // Close cart if open
+            this.toastr.success('Bill Settled! Thank you for visiting.', 'Success', { timeOut: 10000 });
+          } else {
+            // Normal update (Preparing/Served)
+            await this.checkExistingOrder();
+            this.toastr.info(`Order Status: ${data.status.toUpperCase()}`);
+          }
         }
       }
+    };
+
+    socket.onclose = () => {
+      setTimeout(() => this.setupCustomerSocket(), 5000);
     };
   }
 

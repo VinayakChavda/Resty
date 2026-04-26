@@ -98,4 +98,4 @@ async def call_service(data: dict):
         "table_number": data['table_number'],
         "type": data['type']
     })
-    return {"status": "sent"}
+    return {"status": "success"}

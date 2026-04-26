@@ -29,11 +29,6 @@ export class MenuService {
         return res.data;
     }
 
-    async addMenuItem(data: any): Promise<MenuItem> {
-        const res = await axios.post(`${this.apiUrl}/items`, data, this.authHeader);
-        return res.data;
-    }
-
     async deleteCategory(id: number): Promise<void> {
         await axios.delete(`${this.apiUrl}/categories/${id}`, this.authHeader);
     }
@@ -58,12 +53,22 @@ export class MenuService {
         return res.data;
     }
 
-    async updateMenuItem(id: number, data: any): Promise<MenuItem> {
-        const res = await axios.put(`${this.apiUrl}/items/${id}`, data, this.authHeader);
+    async deleteMenuItem(id: number): Promise<void> {
+        await axios.delete(`${this.apiUrl}/items/${id}`, this.authHeader);
+    }
+
+    async addMenuItem(data: FormData): Promise<MenuItem> {
+        const res = await axios.post(`${this.apiUrl}/items`, data, {
+            headers: { ...this.authHeader.headers, 'Content-Type': 'multipart/form-data' }
+        });
         return res.data;
     }
 
-    async deleteMenuItem(id: number): Promise<void> {
-        await axios.delete(`${this.apiUrl}/items/${id}`, this.authHeader);
+
+    async updateMenuItem(id: number, data: FormData): Promise<MenuItem> {
+        const res = await axios.put(`${this.apiUrl}/items/${id}`, data, {
+            headers: { ...this.authHeader.headers, 'Content-Type': 'multipart/form-data' }
+        });
+        return res.data;
     }
 }
