@@ -19,4 +19,5 @@ export interface MenuItem {
   price: number;
   is_available: boolean;
   subcategory_id: number;
+  image_url?: string; 
 }

@@ -16,13 +16,13 @@ import { Category, MenuItem, SubCategory } from '../../core/models/menu.model';
 export class MenuMgmtComponent implements OnInit {
   tabs: ('categories' | 'subcategories' | 'items')[] = ['categories', 'subcategories', 'items'];
   activeTab: 'categories' | 'subcategories' | 'items' = 'items';
-  
+
   showForm = false;
   isInitialLoading = true;
   isSaving = false;
   isDeleting = false;
   isEditMode = false;
-  
+
   restaurantId: number | null = null;
   editingItemId: number | null = null;
   categories: Category[] = [];
@@ -38,6 +38,7 @@ export class MenuMgmtComponent implements OnInit {
 
   showDeleteModal = false;
   catIdToDelete: number | null = null;
+  selectedFile: File | null = null;
 
   constructor(
     private menuService: MenuService,
@@ -105,23 +106,36 @@ export class MenuMgmtComponent implements OnInit {
     }
   }
 
+  onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0];
+  }
+
   async onSaveItem() {
     if (!this.newItem.name || !this.newItem.price || !this.selectedCategory) return;
     this.isSaving = true;
-    const payload = { ...this.newItem, category_id: this.selectedCategory };
+
+    const formData = new FormData();
+    formData.append('name', this.newItem.name);
+    formData.append('price', this.newItem.price.toString());
+    formData.append('description', this.newItem.description || '');
+    formData.append('category_id', this.selectedCategory.toString());
+    if (this.newItem.subcategory_id) formData.append('subcategory_id', this.newItem.subcategory_id.toString());
+    if (this.selectedFile) formData.append('image', this.selectedFile);
+
     try {
       if (this.isEditMode && this.editingItemId) {
-        await this.menuService.updateMenuItem(this.editingItemId, payload);
+        await this.menuService.updateMenuItem(this.editingItemId, formData);
         this.toastr.success('Updated');
       } else {
-        await this.menuService.addMenuItem(payload);
+        await this.menuService.addMenuItem(formData);
         this.toastr.success('Added');
       }
+      this.selectedFile = null; // Clear file
       this.cancelEdit();
       await this.loadAllData();
     } finally { this.isSaving = false; }
   }
-
+  
   onEditItem(item: MenuItem) {
     this.isEditMode = true;
     this.showForm = true;
