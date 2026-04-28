@@ -45,3 +45,33 @@ async def update_status(order_id: int, status: str, db: Session = Depends(get_db
 def get_completed_orders(db: Session = Depends(get_db), user = Depends(get_current_user)):
     repo = OrderRepository(db)
     return repo.get_completed_orders(user['restaurant_id'])
+
+@router.post("/{order_id}/add-item")
+async def admin_add_item(
+    order_id: int, 
+    menu_item_id: int, 
+    quantity: int = 1, 
+    db: Session = Depends(get_db), 
+    user = Depends(get_current_user)
+):
+    repo = OrderRepository(db)
+    
+    # 1. Fetch item to get its price
+    from ..models.menu_item import MenuItem
+    item = db.query(MenuItem).filter(MenuItem.id == menu_item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    # 2. Add to Existing Order logic (We already wrote this in the repo)
+    new_items = [{"menu_item_id": menu_item_id, "quantity": quantity}]
+    updated_order = repo.add_items_to_existing_order(order_id, new_items)
+
+    # 3. Notify Customer Phone via WebSocket (So their bill updates instantly)
+    from ..websocket_manager import manager
+    await manager.send_notification(user['restaurant_id'], {
+        "event": "STATUS_UPDATE", # This triggers a refresh on customer phone
+        "table_number": updated_order.table_number,
+        "status": updated_order.status
+    })
+
+    return {"status": "success", "total_price": updated_order.total_price}

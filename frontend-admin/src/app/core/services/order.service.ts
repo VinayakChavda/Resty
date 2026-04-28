@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 })
 export class OrderService {
   private apiUrl = `${environment.backendUrl}/orders`;
-  
+
 
   private get authHeader() {
     return { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
@@ -25,6 +25,11 @@ export class OrderService {
 
   async getCompletedOrders() {
     const res = await axios.get(`${this.apiUrl}/completed`, this.authHeader);
+    return res.data;
+  }
+
+  async addItemToOrder(orderId: number, menuItemId: number, quantity: number = 1) {
+    const res = await axios.post(`${this.apiUrl}/${orderId}/add-item?menu_item_id=${menuItemId}&quantity=${quantity}`, {}, this.authHeader);
     return res.data;
   }
 }
