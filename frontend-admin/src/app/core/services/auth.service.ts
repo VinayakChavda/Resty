@@ -17,7 +17,8 @@ export class AuthService {
       }
       return response.data;
     } catch (error: any) {
-      throw error.response.data.detail || 'Login failed';
+      // Use ?. to safely check if response exists
+      throw error.response?.data?.detail || 'Server is unreachable. Check your IP/Network.';
     }
   }
 
