@@ -207,6 +207,9 @@
                 <div *ngFor="let item of cart" class="flex justify-between items-center animate-fadeIn">
                     <div class="flex-1">
                         <h4 class="font-black text-slate-800 text-sm capitalize">{{ item.name }}</h4>
+                        <input type="text" [(ngModel)]="item.notes" 
+        placeholder="Instruction (e.g. Make it spicy)"
+        class="w-full mt-1 bg-gray-50 border-none p-2 rounded-lg text-[10px] font-bold outline-none focus:ring-1 focus:ring-orange-300 placeholder:text-gray-300">
                         <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">₹{{ item.price }} per unit</p>
                     </div>
                     <div class="flex items-center gap-4 bg-orange-50 px-4 py-2 rounded-2xl border border-orange-100">

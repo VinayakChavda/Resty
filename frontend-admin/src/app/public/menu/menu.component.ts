@@ -4,12 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import axios from 'axios';
 import { ToastrService } from 'ngx-toastr';
 import { environment } from '../../../environments/environment';
+import { FormsModule } from '@angular/forms';
 
 declare var Razorpay: any; // Razorpay ke liye global variable
 @Component({
   selector: 'app-public-menu',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,FormsModule],
   templateUrl: './menu.component.html',
   styleUrls: ['./menu.component.scss']
 })
@@ -145,7 +146,8 @@ export class PublicMenuComponent implements OnInit {
       table_number: this.tableNumber,
       items: this.cart.map(item => ({
         menu_item_id: item.id,
-        quantity: item.quantity
+        quantity: item.quantity,
+        notes: item.notes || ''
       }))
     };
 

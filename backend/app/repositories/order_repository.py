@@ -20,39 +20,37 @@ class OrderRepository(BaseRepository):
         return self.db.query(Order).filter(Order.id == order_id).first()
 
     def place_order(self, order_data: dict):
-        # 1. Calculate Total Price dynamically from Database
         final_total = 0
         items_with_prices = []
 
         for item in order_data['items']:
-            # Database se item fetch karo uski real price ke liye
             db_menu_item = self.db.query(MenuItem).filter(MenuItem.id == item['menu_item_id']).first()
             
             if db_menu_item:
                 item_total = db_menu_item.price * item['quantity']
                 final_total += item_total
-                # Item info save kar lete hain order_items ke liye
+                # 🔥 FIX: Yahan 'notes' ko list mein add karna zaroori hai
                 items_with_prices.append({
                     "menu_item_id": db_menu_item.id,
-                    "quantity": item['quantity']
+                    "quantity": item['quantity'],
+                    "notes": item.get('notes') # <--- Capture notes here
                 })
 
-        # 2. Create Main Order Record with calculated total
         db_order = Order(
             restaurant_id=order_data['restaurant_id'],
             table_number=order_data['table_number'],
             status="pending",
-            total_price=final_total  # AB YEH REAL TOTAL HAI!
+            total_price=final_total
         )
         self.db.add(db_order)
-        self.db.flush()  # Order ID generate karne ke liye
+        self.db.flush() 
 
-        # 3. Add individual Order Items
         for item in items_with_prices:
             db_item = OrderItem(
                 order_id=db_order.id,
                 menu_item_id=item['menu_item_id'],
-                quantity=item['quantity']
+                quantity=item['quantity'],
+                notes=item.get('notes') # <--- Save to DB
             )
             self.db.add(db_item)
         
@@ -99,19 +97,18 @@ class OrderRepository(BaseRepository):
         for item in items:
             db_menu_item = self.db.query(MenuItem).filter(MenuItem.id == item['menu_item_id']).first()
             if db_menu_item:
-                # Add to total price
                 new_total_addition += (db_menu_item.price * item['quantity'])
                 
-                # Create OrderItem
+                # 🔥 FIX: Existing bill mein naye items add karte waqt notes save karo
                 db_item = OrderItem(
                     order_id=order_id,
                     menu_item_id=item['menu_item_id'],
-                    quantity=item['quantity']
+                    quantity=item['quantity'],
+                    notes=item.get('notes') # <--- Save notes for add-ons
                 )
                 self.db.add(db_item)
         
         db_order.total_price += new_total_addition
-        # Reset status to pending so kitchen knows there are new items to cook
         db_order.status = 'pending' 
         
         self.db.commit()

@@ -16,32 +16,28 @@ router = APIRouter(prefix="/public", tags=["Customer View"])
 async def place_customer_order(order_in: OrderCreate, db: Session = Depends(get_db)):
     repo = OrderRepository(db)
     
-    # 1. Check if table already has an active bill
+    order_dict = {
+        "restaurant_id": order_in.restaurant_id,
+        "table_number": order_in.table_number,
+        "items": [item.model_dump() for item in order_in.items] # model_dump() automatically includes 'notes'
+    }
+    
+    # Pehle check karo session active hai ya nahi (Order Merge logic)
     existing_order = repo.get_active_order_by_table(order_in.restaurant_id, order_in.table_number)
     
     if existing_order:
-        # 2. Add items to existing order
-        new_items = [item.model_dump() for item in order_in.items]
-        order = repo.add_items_to_existing_order(existing_order.id, new_items)
+        new_order = repo.add_items_to_existing_order(existing_order.id, order_dict['items'])
     else:
-        # 3. Create new order
-        order_dict = {
-            "restaurant_id": order_in.restaurant_id,
-            "table_number": order_in.table_number,
-            "items": [item.model_dump() for item in order_in.items]
-        }
-        order = repo.place_order(order_dict)
+        new_order = repo.place_order(order_dict)
 
-    # 4. Notify Kitchen via WebSocket
-    await manager.send_notification(order.restaurant_id, {
-        "event": "NEW_ORDER", # Kitchen sees this as a new/updated order
-        "order_id": order.id,
-        "table_number": order.table_number,
-        "total_price": order.total_price
+    await manager.send_notification(new_order.restaurant_id, {
+        "event": "NEW_ORDER",
+        "order_id": new_order.id,
+        "table_number": new_order.table_number,
+        "total_price": new_order.total_price
     })
     
-    return {"status": "success", "order_id": order.id}
-
+    return {"status": "success", "order_id": new_order.id}
 
 @router.get("/menu/{restaurant_id}")
 def get_public_menu(restaurant_id: int, db: Session = Depends(get_db)):
